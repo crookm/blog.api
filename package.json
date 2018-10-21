@@ -22,6 +22,8 @@
   },
   "homepage": "https://github.com/crookm/blog.api#readme",
   "dependencies": {
+    "@octokit/rest": "^15.15.1",
+    "dotenv": "^6.1.0",
     "express": "^4.16.4"
   }
 }
