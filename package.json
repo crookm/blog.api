@@ -1,0 +1,23 @@
+{
+  "name": "blog.api",
+  "version": "0.0.1",
+  "description": "API functions for my blog",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crookm/blog.api.git"
+  },
+  "author": {
+    "name": "Matt Crook",
+    "email": "mcro591@aucklanduni.ac.nz",
+    "url": "https://www.crookm.com/"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/crookm/blog.api/issues"
+  },
+  "homepage": "https://github.com/crookm/blog.api#readme"
+}
