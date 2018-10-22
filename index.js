@@ -1,3 +1,5 @@
+#!/usr/bin/node
+
 require("dotenv").config();
 
 const express = require("express");
