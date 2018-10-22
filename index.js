@@ -33,4 +33,11 @@ setTimeout(() => {
 }, 1000 * 60 * 60 * 3); // 3 hours
 console.info(`[i] svccron:github:get-commit_activity - set to run hourly`);
 
+
+/**
+ * SVCSTREAM
+ * live socket events
+ */
+require("./svcstream/twitter/stream-activity")();
+
 app.listen(port, () => console.log(`[i] listening on port ${port}`));
