@@ -10,10 +10,14 @@ module.exports = async (req, res) => {
       console.error(`[*] svcweb:github:get-commit_activity - ${err}`);
       res.status(500).send({ code: 500, message: "internal server error" });
     } else {
-      res.setHeader("cache-control", "private, max-age=1800"); // browser cache 30 mins
+      let body = JSON.parse(data.Body);
+
+      res.setHeader("x-api-endpoint", "svcweb:github:get-commit_activity");
+      res.setHeader("last-modified", new Date(body.updated).toUTCString());
+      res.setHeader("cache-control", "public, max-age=1800"); // browser cache 30 mins
       res.setHeader("etag", data.ETag);
 
-      res.type("json").send(data.Body);
+      res.type("json").send(body);
       console.info(
         `[i] svcweb:github:get-commit_activity - end (${(
           performance.now() - t_start
