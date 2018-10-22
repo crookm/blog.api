@@ -8,7 +8,7 @@ gh.authenticate({
 module.exports = async () => {
   try {
     let activity_groups = [];
-    console.info(`svccron:github:get-commit_activity - started request`);
+    console.info(`svccron:github:get-commit_activity - begin`);
     const repos = await gh.repos.getAll({
       visibility: "public",
       sort: "pushed",
@@ -65,9 +65,7 @@ module.exports = async () => {
 
                   // finish off with a message and the rate limit
                   const rate_limit = await gh.misc.getRateLimit({});
-                  console.info(
-                    `svccron:github:get-commit_activity - finished request`
-                  );
+                  console.info(`svccron:github:get-commit_activity - end`);
                   console.info(
                     `svccron:github:get-commit_activity - github rate limit at ${
                       rate_limit.data.rate.remaining
