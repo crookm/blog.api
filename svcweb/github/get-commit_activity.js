@@ -10,7 +10,9 @@ module.exports = async (req, res) => {
       console.error(`[*] svcweb:github:get-commit_activity - ${err}`);
       res.status(500).send({ code: 500, message: "internal server error" });
     } else {
-      res.setHeader("ETag", data.ETag);
+      res.setHeader("cache-control", "private, max-age=1800"); // browser cache 30 mins
+      res.setHeader("etag", data.ETag);
+
       res.type("json").send(data.Body);
       console.info(
         `[i] svcweb:github:get-commit_activity - end (${(
