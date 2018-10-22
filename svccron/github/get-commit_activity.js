@@ -1,3 +1,4 @@
+const { performance } = require("perf_hooks");
 const store = require("../../util/store-do");
 const gh = require("@octokit/rest")();
 gh.authenticate({
@@ -6,9 +7,11 @@ gh.authenticate({
 });
 
 module.exports = async () => {
+  let t_start = performance.now();
+
   try {
     let activity_groups = [];
-    console.info(`svccron:github:get-commit_activity - begin`);
+    console.info(`[i] svccron:github:get-commit_activity - begin`);
     const repos = await gh.repos.getAll({
       visibility: "public",
       sort: "pushed",
@@ -20,7 +23,7 @@ module.exports = async () => {
       if (repos.data.hasOwnProperty(item)) {
         const repo = repos.data[item];
         console.debug(
-          `svccron:github:get-commit_activity - getting commits for ${
+          `[d] svccron:github:get-commit_activity - getting commits for ${
             repo.full_name
           }`
         );
@@ -55,19 +58,26 @@ module.exports = async () => {
                   ContentDisposition: "inline"
                 },
                 async (err, res) => {
-                  if (err) console.error(err);
+                  if (err)
+                    console.error(
+                      `[*] svccron:github:get-commit_activity ${err}`
+                    );
                   else
                     console.info(
-                      `svccron:github:get-commit_activity - cached to spaces (ETag: ${
+                      `[i] svccron:github:get-commit_activity - cached to spaces (ETag: ${
                         res.ETag
                       })`
                     );
 
                   // finish off with a message and the rate limit
                   const rate_limit = await gh.misc.getRateLimit({});
-                  console.info(`svccron:github:get-commit_activity - end`);
                   console.info(
-                    `svccron:github:get-commit_activity - github rate limit at ${
+                    `[i] svccron:github:get-commit_activity - end (${(
+                      performance.now() - t_start
+                    ).toFixed(2)}ms)`
+                  );
+                  console.info(
+                    `[i] svccron:github:get-commit_activity - github rate limit at ${
                       rate_limit.data.rate.remaining
                     }, restarts at ${new Date(
                       rate_limit.data.rate.reset * 1000
@@ -78,11 +88,11 @@ module.exports = async () => {
             }
           })
           .catch(e => {
-            console.error(`svccron:github:get-commit_activity - ${e}`);
+            console.error(`[*] svccron:github:get-commit_activity - ${e}`);
           });
       }
     }
   } catch (e) {
-    console.error(`svccron:github:get-commit_activity - ${e}`);
+    console.error(`[*] svccron:github:get-commit_activity - ${e}`);
   }
 };

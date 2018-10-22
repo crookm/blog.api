@@ -14,7 +14,7 @@ app.get(
   "/svcweb/github/commits/recent",
   require("./svcweb/github/get-commit_activity")
 );
-console.info(`svcweb:github:get-commit_activity - route added`);
+console.info(`[i] svcweb:github:get-commit_activity - route added`);
 
 /**
  * SVCCRON
@@ -22,7 +22,7 @@ console.info(`svcweb:github:get-commit_activity - route added`);
  */
 setTimeout(() => {
   require("./svccron/github/get-commit_activity")();
-}, 1000 * 60 * 60 * 1); // 1 hour
-console.info(`svccron:github:get-commit_activity - set to run hourly`);
+}, 1000 * 60 * 60 * 3); // 3 hours
+console.info(`[i] svccron:github:get-commit_activity - set to run hourly`);
 
-app.listen(port, () => console.log(`listening on port ${port}`));
+app.listen(port, () => console.log(`[i] listening on port ${port}`));
