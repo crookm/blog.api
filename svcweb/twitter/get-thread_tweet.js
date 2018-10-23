@@ -11,6 +11,9 @@ const twclient = new tw({
 });
 
 module.exports = (req, res) => {
+  res.setHeader("x-api-endpoint", "svcweb:twitter:get-thread_tweet");
+  res.setHeader("cache-control", "public, max-age=14400"); // browser cache 4 hrs
+
   if (typeof req.query.path === "undefined") {
     console.warn(
       `[w] svcweb:twitter:get-thread_tweet - req did not have path param`
