@@ -32,8 +32,14 @@ module.exports = {
   },
 
   put_thread: (id, val) => {
-    changes++;
     thread_tweets[id] = val;
+    console.info(
+      `[i] util:store-tw_threads - thread inserted, unsaved changes now at ${++changes}`
+    );
+  },
+
+  search: val => {
+    return Object.keys(thread_tweets).find(key => thread_tweets[key] === val);
   },
 
   update_ep: () => {
