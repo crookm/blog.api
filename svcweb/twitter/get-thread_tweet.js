@@ -35,7 +35,7 @@ module.exports = (req, res) => {
         "statuses/user_timeline",
         {
           user_id: process.env.TWUID,
-          count: 3,
+          count: 200,
           trim_user: true,
           exclude_replies: true,
           include_rts: false
