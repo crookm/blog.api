@@ -7,7 +7,7 @@ gh.authenticate({
 });
 
 module.exports = async () => {
-  let t_start = performance.now();
+  let req_start = performance.now();
 
   try {
     let activity_groups = [];
@@ -73,7 +73,7 @@ module.exports = async () => {
                   const rate_limit = await gh.misc.getRateLimit({});
                   console.info(
                     `[i] svccron:github:get-commit_activity - end (${(
-                      performance.now() - t_start
+                      performance.now() - req_start
                     ).toFixed(2)}ms)`
                   );
                   console.info(

@@ -2,7 +2,7 @@ const { performance } = require("perf_hooks");
 const store = require("../../util/store-do");
 
 module.exports = async (req, res) => {
-  let t_start = performance.now();
+  let req_start = performance.now();
 
   console.info(`[i] svcweb:github:get-commit_activity - begin`);
   store.get_obj("api/obj/github/recent_commits.json", (err, data) => {
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
       res.type("json").send(body);
       console.info(
         `[i] svcweb:github:get-commit_activity - end (${(
-          performance.now() - t_start
+          performance.now() - req_start
         ).toFixed(2)}ms)`
       );
     }
