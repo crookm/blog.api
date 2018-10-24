@@ -2,6 +2,8 @@ const { performance } = require("perf_hooks");
 const url = require("url");
 
 const tw_threads = require("../../util/store-tw_threads");
+const tw_thread_setup = require("../../util/tw-thread_setup");
+
 const tw = require("twitter");
 const twclient = new tw({
   consumer_key: process.env.TWCKEY,
@@ -10,99 +12,89 @@ const twclient = new tw({
   access_token_secret: process.env.TWATSEC
 });
 
-module.exports = (req, res) => {
-  res.setHeader("x-api-endpoint", "svcweb:twitter:get-thread_tweet");
-  res.setHeader("cache-control", "public, max-age=14400"); // browser cache 4 hrs
+module.exports = async (req, res) => {
+  let req_start = performance.now();
+  console.info(`[i] svcweb:twitter:get-thread_tweet - begin`);
 
-  if (typeof req.query.path === "undefined") {
-    console.warn(
-      `[w] svcweb:twitter:get-thread_tweet - req did not have path param`
-    );
-    res.status(400).send({ code: 400, message: "bad request" });
-  } else {
-    let t_start = performance.now();
-    console.info(`[i] svcweb:twitter:get-thread_tweet - begin`);
+  try {
+    res.setHeader("x-api-endpoint", "svcweb:twitter:get-thread_tweet");
+    res.setHeader("cache-control", "public, max-age=14400"); // browser cache 4 hrs
 
-    let sent = false;
-
-    if (tw_threads.search(req.query.path)) {
-      res.send({ twid: tw_threads.search(req.query.path) });
-      console.info(
-        `[i] svcweb:twitter:get-thread_tweet - end (${(
-          performance.now() - t_start
-        ).toFixed(2)}ms)`
-      );
-      return;
+    if (typeof req.query.path === "undefined") {
+      console.warn(`[w] svcweb:twitter:get-thread_tweet - no path specified`);
+      res.status(400).send({ code: 400, message: "bad request" });
     } else {
-      twclient.get(
-        "statuses/user_timeline",
-        {
-          user_id: process.env.TWUID,
-          count: 200,
-          trim_user: true,
-          exclude_replies: true,
-          include_rts: false
-        },
-        (e, tweets, resp) => {
-          if (e) {
-            console.error(`[*] svcweb:twitter:get-thread_tweet - ${e}`);
-            res
-              .status(500)
-              .send({ code: 500, message: "internal server error" });
-            return;
-          } else {
-            tweets.forEach(tweet => {
-              // check that it was me that tweeted this, so others
-              // can't claim the post thread tweet by tweeting a url
-              if (tweet.user.id_str == process.env.TWUID) {
-                tweet.entities.urls.forEach(tw_url => {
+      let thread = tw_threads.search(req.query.path);
+      if (thread) {
+        res.send(thread);
+      } else {
+        const tw_timeline_resp = await twclient
+          .get("statuses/user_timeline", {
+            user_id: process.env.TWUID,
+            count: 200,
+            trim_user: true,
+            exclude_replies: true,
+            include_rts: false
+          })
+          .catch(err => {
+            throw err;
+          });
+
+        if (tw_timeline_resp) {
+          for (const tweet_lu in tw_timeline_resp) {
+            // iterate tweeets in timeline
+            if (tw_timeline_resp.hasOwnProperty(tweet_lu)) {
+              const tweet = tw_timeline_resp[tweet_lu];
+
+              for (const tweet_url_entity_lu in tweet.entities.urls) {
+                // iterate urls in tweet
+                if (tweet.entities.urls.hasOwnProperty(tweet_url_entity_lu)) {
+                  const tweet_url_entity =
+                    tweet.entities.urls[tweet_url_entity_lu];
+
                   // go through each url attached and see if it's to the blog
                   if (
-                    tw_url.expanded_url.startsWith(
+                    tweet_url_entity.expanded_url.startsWith(
                       "https://www.crookm.com/journal/"
                     )
                   ) {
-                    // valid thread tweet! check if it's the one we're looking for
+                    // we got a thread link, but is it the right one?
                     if (
-                      url.parse(tw_url.expanded_url).pathname === req.query.path
+                      url.parse(tweet_url_entity.expanded_url).pathname ===
+                      req.query.path
                     ) {
-                      // it was! go ahead and store it
-                      tw_threads.put_thread(
-                        tweet.id_str,
-                        url.parse(tw_url.expanded_url).pathname
-                      );
-
-                      res.send({ twid: tweet.id_str });
-                      console.info(
-                        `[i] svcweb:twitter:get-thread_tweet - end (${(
-                          performance.now() - t_start
-                        ).toFixed(2)}ms)`
-                      );
-
-                      sent = true;
+                      thread = await tw_thread_setup(
+                        tweet,
+                        tweet_url_entity
+                      ).catch(err => {
+                        throw err;
+                      });
+                      if (thread) return res.send(thread);
                     }
                   }
-                });
+                }
               }
-            });
-
-            if (!sent) {
-              // couldn't be found in first ~200 tweets, don't bother further
-              res.status(404).send({ code: 404, message: "not found" });
-              console.info(
-                `[i] svcweb:twitter:get-thread_tweet - could not find tweet for ${
-                  req.query.path
-                }`
-              );
-              console.info(
-                `[i] svcweb:twitter:get-thread_tweet - end (${(
-                  performance.now() - t_start
-                ).toFixed(2)}ms)`
-              );
             }
           }
+
+          // couldn't be found in first ~200 tweets, don't bother further
+          res.status(404).send({ code: 404, message: "not found" });
+          console.info(
+            `[i] svcweb:twitter:get-thread_tweet - no thread for ${
+              req.query.path
+            }`
+          );
         }
-      );
+      }
     }
+  } catch (err) {
+    res.status(500).send({ code: 500, message: "internal server error" });
+    console.error(`[*] svcweb:twitter:get-thread_tweet - ${err}`);
+  } finally {
+    console.info(
+      `[i] svcweb:twitter:get-thread_tweet - end (${(
+        performance.now() - req_start
+      ).toFixed(2)}ms)`
+    );
   }
 };

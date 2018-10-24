@@ -2,6 +2,8 @@ const { performance } = require("perf_hooks");
 const url = require("url");
 
 const tw_threads = require("../../util/store-tw_threads");
+const tw_thread_setup = require("../../util/tw-thread_setup");
+
 const tw = require("twitter");
 const twclient = new tw({
   consumer_key: process.env.TWCKEY,
@@ -28,70 +30,78 @@ module.exports = () => {
     }
   });
 
-  stream.on("error", e => {
-    console.error(`[*] svcstream:twitter:stream-activity - ${e}`);
+  stream.on("error", err => {
+    console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
   });
 };
 
 class EventHandler {
-  static handle_reply(event) {
+  static async handle_reply(event) {
     // check is in response to id is in thread_tweets
-    this.is_thread_tweet(
-      event.in_reply_to_status_id_str,
-      () => {
-        // we got a hit! do something with it!
-        console.info(
-          `[i] svcstream:twitter:stream-activity - reply to ${
-            event.in_reply_to_status_id_str
-          } from ${event.user.screen_name} for ${tw_threads.get_thread(
-            event.in_reply_to_status_id_str
-          )}`
-        );
-      },
-      () => {
-        // ignore event
-      }
-    );
+    const thread = await this.is_thread_tweet(
+      event.in_reply_to_status_id_str
+    ).catch(err => {
+      console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+    });
+
+    if (thread) {
+      console.info(
+        `[i] svcstream:twitter:stream-activity - reply to ${
+          event.in_reply_to_status_id_str
+        } from ${event.user.screen_name} for ${
+          tw_threads.get_thread(event.in_reply_to_status_id_str).path
+        }`
+      );
+
+      // add to collection
+    }
+
+    // else ignored
   }
 
-  static is_thread_tweet(tw_id, cb_true, cb_false) {
-    // is the response_to ID a valid thread tweet?
-    if (tw_id) {
-      if (tw_threads.get_thread(tw_id)) cb_true();
-      else {
-        // id was not already locally cached, check if we just haven't got it yet
-        twclient.get(
-          "statuses/show",
-          { id: tw_id, include_entities: true },
-          (e, tweet, resp) => {
-            if (e)
-              console.error(`[*] svcstream:twitter:stream-activity - ${e}`);
-            else {
-              // check that it was me that tweeted this, so others
-              // can't claim the post thread tweet by tweeting a url
-              if (tweet.user.id_str == process.env.TWUID) {
-                tweet.entities.urls.forEach(tw_url => {
-                  // go through each url attached and see if it's to the blog
-                  if (
-                    tw_url.expanded_url.startsWith(
-                      "https://www.crookm.com/journal/"
-                    )
-                  ) {
-                    // valid thread tweet! store it
-                    tw_threads.put_thread(
-                      tw_id,
-                      url.parse(tw_url.expanded_url).pathname
-                    );
-                    cb_true();
-                  }
-                });
+  static is_thread_tweet(tweet_id) {
+    return new Promise(async (resolve, reject) => {
+      // is the response_to ID a valid thread tweet?
+      if (tweet_id) {
+        let thread = tw_threads.get_thread(tweet_id);
+        if (thread) resolve(thread);
+        else {
+          // id was not already locally cached, check if we just haven't got it yet
+          const tweet = await twclient
+            .get("statuses/show", {
+              id: tweet_id,
+              include_entities: true
+            })
+            .catch(reject);
+
+          // check that it was me that tweeted this, so others
+          // can't claim the post thread tweet by tweeting a url
+          if (tweet.user.id_str == process.env.TWUID) {
+            for (const tweet_url_entity_lu in tweet.entities.urls) {
+              if (tweet.entities.urls.hasOwnProperty(tweet_url_entity_lu)) {
+                const tweet_url_entity =
+                  tweet.entities.urls[tweet_url_entity_lu];
+
+                // go through each url attached and see if it's to the blog
+                if (
+                  tweet_url_entity.expanded_url.startsWith(
+                    "https://www.crookm.com/journal/"
+                  )
+                ) {
+                  // this is what we were looking for - initiate setup
+                  thread = await tw_thread_setup(tweet, tweet_url_entity).catch(
+                    reject
+                  );
+
+                  if (thread) resolve(thread);
+                }
               }
             }
-
-            cb_false();
           }
-        );
+
+          resolve(false); // nothing relevant found
+        }
       }
-    } else cb_false();
+    });
   }
 }
