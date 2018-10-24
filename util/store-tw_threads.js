@@ -39,7 +39,9 @@ module.exports = {
   },
 
   search: val => {
-    return Object.keys(thread_tweets).find(key => thread_tweets[key] === val);
+    return thread_tweets[
+      Object.keys(thread_tweets).filter(key => thread_tweets[key].path === val)
+    ];
   },
 
   update_ep: () => {
