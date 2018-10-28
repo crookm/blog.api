@@ -34,7 +34,7 @@ console.info(`[i] svcweb:twitter:get-thread_tweet - route added`);
  * SVCCRON
  * timed api events
  */
-setTimeout(() => {
+setInterval(() => {
   require("./svccron/github/get-commit_activity")();
 }, 1000 * 60 * 60 * 3); // 3 hours
 console.info(`[i] svccron:github:get-commit_activity - set to run hourly`);

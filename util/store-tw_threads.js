@@ -9,7 +9,7 @@ console.info(`[i] util:store-tw_threads - refreshing thread tweets...`);
 let thread_tweet_start = performance.now();
 store.get_obj("api/obj/twitter/threads.json", (err, data) => {
   if (err) {
-    console.error(`[*] util:store-tw_threads- ${err}`);
+    console.error(`[*] util:store-tw_threads - ${err}`);
   } else {
     let body = JSON.parse(data.Body);
     if (body) thread_tweets = body.data;
