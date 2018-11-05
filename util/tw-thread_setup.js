@@ -31,13 +31,5 @@ module.exports = (tweet, tweet_url_entity) =>
       // save the object
       tw_threads.put_thread(thread.id, thread);
       resolve(thread);
-
-      // add the thread tweet to the coll to set it up
-      await twclient
-        .post("collections/entries/add", {
-          id: thread.list,
-          tweet_id: thread.id
-        })
-        .catch(reject);
     }
   });
