@@ -31,6 +31,9 @@ let event_handler = {
       );
 
       // add to collection
+      await event_handler.add_to_collection(event.id_str, thread).catch(err => {
+        console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+      });
     }
   },
 
@@ -77,6 +80,18 @@ let event_handler = {
           resolve(false); // nothing relevant found
         }
       }
+    }),
+
+  add_to_collection: (tweet_id, thread) =>
+    new Promise(async (resolve, reject) => {
+      await twclient
+        .post("collections/entries/add", {
+          id: thread.list,
+          tweet_id: tweet_id
+        })
+        .catch(reject);
+
+      resolve();
     })
 };
 
