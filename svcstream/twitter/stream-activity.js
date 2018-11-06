@@ -4,11 +4,11 @@ const url = require("url");
 const tw_threads = require("../../util/store-tw_threads");
 const tw_thread_setup = require("../../util/tw-thread_setup");
 
-const tw = require("twitter");
+const tw = require("twit");
 const twclient = new tw({
   consumer_key: process.env.TWCKEY,
   consumer_secret: process.env.TWCSEC,
-  access_token_key: process.env.TWATKEY,
+  access_token: process.env.TWATKEY,
   access_token_secret: process.env.TWATSEC
 });
 
@@ -29,6 +29,8 @@ let event_handler = {
           tw_threads.get_thread(event.in_reply_to_status_id_str).path
         }`
       );
+
+      console.log(event);
 
       // add to collection
       await event_handler.add_to_collection(event.id_str, thread).catch(err => {
@@ -54,11 +56,11 @@ let event_handler = {
 
           // check that it was me that tweeted this, so others
           // can't claim the post thread tweet by tweeting a url
-          if (tweet.user.id_str == process.env.TWUID) {
-            for (const tweet_url_entity_lu in tweet.entities.urls) {
-              if (tweet.entities.urls.hasOwnProperty(tweet_url_entity_lu)) {
+          if (tweet.data.user.id_str == process.env.TWUID) {
+            for (const tweet_url_entity_lu in tweet.data.entities.urls) {
+              if (tweet.data.entities.urls.hasOwnProperty(tweet_url_entity_lu)) {
                 const tweet_url_entity =
-                  tweet.entities.urls[tweet_url_entity_lu];
+                  tweet.data.entities.urls[tweet_url_entity_lu];
 
                 // go through each url attached and see if it's to the blog
                 if (
@@ -67,7 +69,7 @@ let event_handler = {
                   )
                 ) {
                   // this is what we were looking for - initiate setup
-                  thread = await tw_thread_setup(tweet, tweet_url_entity).catch(
+                  thread = await tw_thread_setup(tweet.data, tweet_url_entity).catch(
                     reject
                   );
 
@@ -102,7 +104,7 @@ module.exports = () => {
 
   console.info(`[i] svcstream:twitter:stream-activity - streaming started`);
 
-  stream.on("data", event => {
+  stream.on("tweet", event => {
     if (
       typeof event.id_str === "string" &&
       typeof event.text === "string" &&
@@ -115,5 +117,13 @@ module.exports = () => {
 
   stream.on("error", err => {
     console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+  });
+
+  stream.on("disconnect", err => {
+    console.error(`[*] svcstream:twitter:stream-activity - dc: ${err}`);
+  });
+
+  stream.on("reconnect", () => {
+    console.info(`[i] svcstream:twitter:stream-activity - reconnecting`);
   });
 };

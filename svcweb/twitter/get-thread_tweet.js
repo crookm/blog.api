@@ -4,11 +4,11 @@ const url = require("url");
 const tw_threads = require("../../util/store-tw_threads");
 const tw_thread_setup = require("../../util/tw-thread_setup");
 
-const tw = require("twitter");
+const tw = require("twit");
 const twclient = new tw({
   consumer_key: process.env.TWCKEY,
   consumer_secret: process.env.TWCSEC,
-  access_token_key: process.env.TWATKEY,
+  access_token: process.env.TWATKEY,
   access_token_secret: process.env.TWATSEC
 });
 
@@ -40,11 +40,11 @@ module.exports = async (req, res) => {
             throw err;
           });
 
-        if (tw_timeline_resp) {
-          for (const tweet_lu in tw_timeline_resp) {
+        if (tw_timeline_resp.data) {
+          for (const tweet_lu in tw_timeline_resp.data) {
             // iterate tweeets in timeline
-            if (tw_timeline_resp.hasOwnProperty(tweet_lu)) {
-              const tweet = tw_timeline_resp[tweet_lu];
+            if (tw_timeline_resp.data.hasOwnProperty(tweet_lu)) {
+              const tweet = tw_timeline_resp.data[tweet_lu];
 
               for (const tweet_url_entity_lu in tweet.entities.urls) {
                 // iterate urls in tweet

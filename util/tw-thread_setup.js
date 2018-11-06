@@ -2,11 +2,11 @@ const url = require("url");
 
 const tw_threads = require("./store-tw_threads");
 
-const tw = require("twitter");
+const tw = require("twit");
 const twclient = new tw({
   consumer_key: process.env.TWCKEY,
   consumer_secret: process.env.TWCSEC,
-  access_token_key: process.env.TWATKEY,
+  access_token: process.env.TWATKEY,
   access_token_secret: process.env.TWATSEC
 });
 
@@ -26,7 +26,7 @@ module.exports = (tweet, tweet_url_entity) =>
       .catch(reject);
 
     if (new_collection_resp) {
-      thread["list"] = new_collection_resp.response.timeline_id; // id for the timeline of comments
+      thread["list"] = new_collection_resp.data.response.timeline_id; // id for the timeline of comments
 
       // save the object
       tw_threads.put_thread(thread.id, thread);
