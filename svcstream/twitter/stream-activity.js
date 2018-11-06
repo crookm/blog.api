@@ -30,8 +30,6 @@ let event_handler = {
         }`
       );
 
-      console.log(event);
-
       // add to collection
       await event_handler.add_to_collection(event.id_str, thread).catch(err => {
         console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
