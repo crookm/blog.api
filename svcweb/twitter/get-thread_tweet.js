@@ -21,11 +21,15 @@ module.exports = async (req, res) => {
     res.setHeader("cache-control", "public, max-age=14400"); // browser cache 4 hrs
 
     if (typeof req.query.path === "undefined") {
+      let perf = performance.now() - req_start;
+      res.setHeader("x-api-perf", perf.toFixed(0));
       console.warn(`[w] svcweb:twitter:get-thread_tweet - no path specified`);
       res.status(400).send({ code: 400, message: "bad request" });
     } else {
       let thread = tw_threads.search(req.query.path);
       if (thread) {
+        let perf = performance.now() - req_start;
+        res.setHeader("x-api-perf", perf.toFixed(0));
         res.send(thread);
       } else {
         const tw_timeline_resp = await twclient
@@ -69,6 +73,8 @@ module.exports = async (req, res) => {
                       ).catch(err => {
                         throw err;
                       });
+                      let perf = performance.now() - req_start;
+                      res.setHeader("x-api-perf", perf.toFixed(0));
                       if (thread) return res.send(thread);
                     }
                   }
@@ -78,6 +84,8 @@ module.exports = async (req, res) => {
           }
 
           // couldn't be found in first ~200 tweets, don't bother further
+          let perf = performance.now() - req_start;
+          res.setHeader("x-api-perf", perf.toFixed(0));
           res.status(404).send({ code: 404, message: "not found" });
           console.info(
             `[i] svcweb:twitter:get-thread_tweet - no thread for ${
@@ -88,6 +96,8 @@ module.exports = async (req, res) => {
       }
     }
   } catch (err) {
+    let perf = performance.now() - req_start;
+    res.setHeader("x-api-perf", perf.toFixed(0));
     res.status(500).send({ code: 500, message: "internal server error" });
     console.error(`[*] svcweb:twitter:get-thread_tweet - ${err}`);
   } finally {
