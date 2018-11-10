@@ -45,4 +45,28 @@ console.info(`[i] svccron:github:get-commit_activity - set to run hourly`);
  */
 require("./svcstream/twitter/stream-activity")();
 
-app.listen(port, () => console.log(`[i] listening on port ${port}`));
+const srv = app.listen(port, () =>
+  console.info(`[i] listening on port ${port}`)
+);
+
+let goodbye = signal => {
+  console.info(`[i] received ${signal}, shutting down...`);
+  let readiness = 0; // num of services saying goodbye
+
+  srv.close(() => readiness++);
+  //require("./util/store-analytics").goodbye(() => readiness++); NYI
+
+  // exit after 5s (or 1s if local) regardless of readiness
+  setTimeout(
+    () => {
+      console.info(`[i] reached exit state with ${readiness} readiness.`);
+      console.info(`[i] goodbye!`);
+      process.exit(0);
+    },
+    process.env.PORT === 3000 ? 1000 : 1000 * 5
+  );
+};
+
+process.on("SIGHUP", () => goodbye("SIGHUP"));
+process.on("SIGINT", () => goodbye("SIGINT"));
+process.on("SIGTERM", () => goodbye("SIGTERM"));
