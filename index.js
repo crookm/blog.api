@@ -71,6 +71,7 @@ let goodbye = signal => {
   let readiness = 0; // num of services saying goodbye
 
   srv.close(() => readiness++);
+  require("./util/store-mongo").goodbye(() => readiness++);
   //require("./util/store-analytics").goodbye(() => readiness++); NYI
 
   // exit after 1s (or .5s if local) regardless of readiness
