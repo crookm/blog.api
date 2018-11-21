@@ -68,12 +68,37 @@ module.exports = {
       }
     }),
 
+  insert: (db_name, coll_name, docs) =>
+    new Promise(async (resolve, reject) => {
+      // might end up connecting to the db ourselves here to simplify
+      if (typeof dbs[db_name] === "undefined")
+        reject("db not connected, use db_open first");
+      else {
+        let collection = await module.exports
+          .coll_get(db_name, coll_name)
+          .catch(reject);
+
+        try {
+          let res = await collection.insertMany(docs).catch(err => {
+            throw err; // just raise it again to have it handled by the try block
+          });
+
+          resolve(res);
+        } catch (err) {
+          console.error(`[*] util:store-mongo - error inserting: ${err}`);
+          reject(err);
+        }
+      }
+    }),
+
   // get a collection in a db
   coll_get: (db_name, coll_name) =>
     new Promise((resolve, reject) =>
       dbs[db_name].collection(coll_name, { strict: true }, (err, coll) => {
-        if (err) reject(err);
-        else resolve(coll);
+        if (err) {
+          console.error(`[*] util:store-mongo - error getting coll: ${err}`);
+          reject(err);
+        } else resolve(coll);
       })
     ),
 
