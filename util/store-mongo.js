@@ -8,13 +8,13 @@ module.exports = {
   hello: () =>
     new Promise(async (resolve, reject) => {
       if (client.isConnected()) {
-        console.log("[i] util:store-mongo - said hello, already connected");
+        console.info("[i] util:store-mongo - said hello, already connected");
         resolve();
       } else {
         client
           .connect()
           .then(() => {
-            console.log("[i] util:store-mongo - said hello, connected");
+            console.info("[i] util:store-mongo - said hello, connected");
             resolve();
           })
           .catch(reject);
@@ -26,7 +26,7 @@ module.exports = {
     new Promise(async (resolve, reject) => {
       if (!client.isConnected()) {
         // initiate the hello here if it hasn't already been setup
-        console.log("[*] util:store-mongo - not connected, saying hello...");
+        console.info("[i] util:store-mongo - not connected, saying hello...");
         await module.exports.hello().catch(err => {
           console.error(`[*] util:store-mongo - error saying hello: ${err}`);
           reject(err);
