@@ -7,12 +7,22 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.set("env", "production");
+app.use(require("body-parser").json());
 app.use(
   cors({
     origin: "*",
     optionsSuccessStatus: 200
   })
 );
+
+// ffs with body parser not handling exceptions well
+app.use(function(err, req, res, next) {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    res.setHeader("x-api-perf","0"); // justify: never entered func
+    res.status(400).send({ code: 400, message: "bad request" });
+  } else next();
+});
 
 /**
  * SVCWEB
@@ -30,14 +40,21 @@ app.get(
 );
 console.info(`[i] svcweb:twitter:get-thread_tweet - route added`);
 
+// NYI
+// app.post(
+//   "/svcweb/analytics/event/do/:cat",
+//   require("./svcweb/analytics/do-produce_event")
+// );
+// console.info(`[i] svcweb:analytics:do-produce_event - route added`);
+
 /**
  * SVCCRON
  * timed api events
  */
 setInterval(() => {
   require("./svccron/github/get-commit_activity")();
-}, 1000 * 60 * 60 * 3); // 3 hours
-console.info(`[i] svccron:github:get-commit_activity - set to run hourly`);
+}, 1000 * 60 * 60 * .5); // 30 min
+console.info(`[i] svccron:github:get-commit_activity - set to run every half hour`);
 
 /**
  * SVCSTREAM
@@ -56,14 +73,14 @@ let goodbye = signal => {
   srv.close(() => readiness++);
   //require("./util/store-analytics").goodbye(() => readiness++); NYI
 
-  // exit after 5s (or 1s if local) regardless of readiness
+  // exit after 1s (or .5s if local) regardless of readiness
   setTimeout(
     () => {
       console.info(`[i] reached exit state with ${readiness} readiness.`);
       console.info(`[i] goodbye!`);
       process.exit(0);
     },
-    process.env.PORT === 3000 ? 1000 : 1000 * 5
+    process.env.PORT === 3000 ? 500 : 1000
   );
 };
 

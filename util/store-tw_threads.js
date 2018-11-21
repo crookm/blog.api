@@ -34,7 +34,7 @@ module.exports = {
   put_thread: (id, val) => {
     thread_tweets[id] = val;
     console.info(
-      `[i] util:store-tw_threads - thread inserted, unsaved changes now at ${++changes}`
+      `[i] util:store-tw_threads - thread inserted, backlog now at ${++changes}`
     );
   },
 
