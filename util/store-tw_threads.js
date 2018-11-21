@@ -70,7 +70,7 @@ module.exports = {
           }
         }
       );
-    } else console.debug(`[d] util:store-tw_threads - no updates to ep needed`);
+    }
   }
 };
 
