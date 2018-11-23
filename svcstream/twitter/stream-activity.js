@@ -25,9 +25,7 @@ let event_handler = {
       console.info(
         `[i] svcstream:twitter:stream-activity - reply to ${
           event.in_reply_to_status_id_str
-        } from ${event.user.screen_name} for ${
-          tw_threads.get_thread(event.in_reply_to_status_id_str).path
-        }`
+        } from ${event.user.screen_name} for ${thread.path}`
       );
 
       // add to collection
@@ -41,7 +39,7 @@ let event_handler = {
     new Promise(async (resolve, reject) => {
       // is the response_to ID a valid thread tweet?
       if (tweet_id) {
-        let thread = tw_threads.get_thread(tweet_id);
+        let thread = await tw_threads.get_thread(tweet_id).catch(reject);
         if (thread) resolve(thread);
         else {
           // id was not already locally cached, check if we just haven't got it yet
@@ -56,7 +54,9 @@ let event_handler = {
           // can't claim the post thread tweet by tweeting a url
           if (tweet.data.user.id_str == process.env.TWUID) {
             for (const tweet_url_entity_lu in tweet.data.entities.urls) {
-              if (tweet.data.entities.urls.hasOwnProperty(tweet_url_entity_lu)) {
+              if (
+                tweet.data.entities.urls.hasOwnProperty(tweet_url_entity_lu)
+              ) {
                 const tweet_url_entity =
                   tweet.data.entities.urls[tweet_url_entity_lu];
 
@@ -67,9 +67,10 @@ let event_handler = {
                   )
                 ) {
                   // this is what we were looking for - initiate setup
-                  thread = await tw_thread_setup(tweet.data, tweet_url_entity).catch(
-                    reject
-                  );
+                  thread = await tw_thread_setup(
+                    tweet.data,
+                    tweet_url_entity
+                  ).catch(reject);
 
                   if (thread) resolve(thread);
                 }

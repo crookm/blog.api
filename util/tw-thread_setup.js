@@ -27,9 +27,11 @@ module.exports = (tweet, tweet_url_entity) =>
 
     if (new_collection_resp) {
       thread["list"] = new_collection_resp.data.response.timeline_id; // id for the timeline of comments
-
-      // save the object
-      tw_threads.put_thread(thread.id, thread);
       resolve(thread);
+
+      // save the object in the bg
+      tw_threads
+        .put_thread(thread.id, thread)
+        .catch(err => console.warn(`[w] util:store-tw_thread_setup - ${err}`));
     }
   });

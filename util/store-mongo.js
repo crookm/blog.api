@@ -24,15 +24,6 @@ module.exports = {
   // open database and add to open_dbs obj
   db_open: db_name =>
     new Promise(async (resolve, reject) => {
-      if (!client.isConnected()) {
-        // initiate the hello here if it hasn't already been setup
-        console.info("[i] util:store-mongo - not connected, saying hello...");
-        await module.exports.hello().catch(err => {
-          console.error(`[*] util:store-mongo - error saying hello: ${err}`);
-          reject(err);
-        });
-      }
-
       // make sure the client is definitely connected
       if (client.isConnected()) {
         try {
@@ -45,7 +36,7 @@ module.exports = {
           );
           reject(err);
         }
-      }
+      } else reject("you must say hello first");
     }),
 
   // find documents matching mongo search pattern, returns cursor
@@ -53,7 +44,7 @@ module.exports = {
     new Promise(async (resolve, reject) => {
       // might end up connecting to the db ourselves here to simplify
       if (typeof dbs[db_name] === "undefined")
-        reject("db not connected, use db_open first");
+        reject("[find] db not connected, use db_open first");
       else {
         // db.collection unfortunately isn't promisified :,(
         let collection = await module.exports
@@ -72,7 +63,7 @@ module.exports = {
     new Promise(async (resolve, reject) => {
       // might end up connecting to the db ourselves here to simplify
       if (typeof dbs[db_name] === "undefined")
-        reject("db not connected, use db_open first");
+        reject("[insert] db not connected, use db_open first");
       else {
         let collection = await module.exports
           .coll_get(db_name, coll_name)
@@ -95,7 +86,7 @@ module.exports = {
     new Promise(async (resolve, reject) => {
       // might end up connecting to the db ourselves here to simplify
       if (typeof dbs[db_name] === "undefined")
-        reject("db not connected, use db_open first");
+        reject("[update] db not connected, use db_open first");
       else {
         let collection = await module.exports
           .coll_get(db_name, coll_name)
