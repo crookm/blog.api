@@ -48,15 +48,6 @@ console.info(`[i] svcweb:twitter:get-thread_tweet - route added`);
 // console.info(`[i] svcweb:analytics:do-produce_event - route added`);
 
 /**
- * SVCCRON
- * timed api events
- */
-setInterval(() => {
-  require("./svccron/github/get-commit_activity")();
-}, 1000 * 60 * 60 * .5); // 30 min
-console.info(`[i] svccron:github:get-commit_activity - set to run every half hour`);
-
-/**
  * SVCSTREAM
  * live socket events
  */
