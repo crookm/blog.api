@@ -49,7 +49,7 @@ module.exports = {
     }),
 
   // find documents matching mongo search pattern, returns cursor
-  find: (db_name, coll_name, search) =>
+  find: (db_name, coll_name, search, opts) =>
     new Promise(async (resolve, reject) => {
       // might end up connecting to the db ourselves here to simplify
       if (typeof dbs[db_name] === "undefined")
@@ -61,7 +61,7 @@ module.exports = {
           .catch(reject);
 
         try {
-          resolve(collection.find(search));
+          resolve(collection.find(search, opts));
         } catch (err) {
           reject(err);
         }
@@ -86,6 +86,31 @@ module.exports = {
           resolve(res);
         } catch (err) {
           console.error(`[*] util:store-mongo - error inserting: ${err}`);
+          reject(err);
+        }
+      }
+    }),
+
+  update: (db_name, coll_name, search, update, opts) =>
+    new Promise(async (resolve, reject) => {
+      // might end up connecting to the db ourselves here to simplify
+      if (typeof dbs[db_name] === "undefined")
+        reject("db not connected, use db_open first");
+      else {
+        let collection = await module.exports
+          .coll_get(db_name, coll_name)
+          .catch(reject);
+
+        try {
+          let res = await collection
+            .updateMany(search, update, opts)
+            .catch(err => {
+              throw err;
+            }); // just raise it again to have it handled by the try block
+
+          resolve(res);
+        } catch (err) {
+          console.error(`[*] util:store-mongo - error updating: ${err}`);
           reject(err);
         }
       }
