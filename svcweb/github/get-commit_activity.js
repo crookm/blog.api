@@ -7,8 +7,10 @@ gh.authenticate({
 });
 
 let ghdata = {};
+let ghprocessing = false; // avoid simultaneous updates
 let update = async () => {
   let update_start = performance.now();
+  ghprocessing = true;
 
   try {
     let activity_groups = [];
@@ -109,6 +111,7 @@ let update = async () => {
     );
 
     ghdata = { updated: new Date(), data: activity_groups };
+    ghprocessing = false;
   } catch (err) {
     console.error(`[*] svcweb:github:get-commit_activity - update: ${err}`);
   }
@@ -133,7 +136,7 @@ module.exports = async (req, res) => {
     `[i] svcweb:github:get-commit_activity - end (${perf.toFixed(2)}ms)`
   );
 
-  if (new Date() - ghdata.updated > 1000 * 60 * 5)
+  if (new Date() - ghdata.updated > 1000 * 60 * 5 && !ghprocessing)
     // update in the bg if not updated in the last 5 mins
     update();
 };
