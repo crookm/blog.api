@@ -52,7 +52,8 @@ let update = async () => {
             },
             tree: { sha: commit.commit.tree.sha },
             comment_count: commit.commit.comment_count,
-            verification: commit.commit.verification
+            verification: commit.commit.verification,
+            message: commit.commit.message
           },
           html_url: commit.html_url,
           parents: Array.from(commit.parents, parent => ({
