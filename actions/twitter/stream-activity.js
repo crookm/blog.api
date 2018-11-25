@@ -1,6 +1,3 @@
-const { performance } = require("perf_hooks");
-const url = require("url");
-
 const tw_threads = require("../../util/store-tw_threads");
 const tw_thread_setup = require("../../util/tw-thread_setup");
 
@@ -18,19 +15,19 @@ let event_handler = {
     const thread = await event_handler
       .is_thread_tweet(event.in_reply_to_status_id_str)
       .catch(err => {
-        console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+        console.error(`[*] twitter:stream-activity - ${err}`);
       });
 
     if (thread) {
       console.info(
-        `[i] svcstream:twitter:stream-activity - reply to ${
+        `[i] twitter:stream-activity - reply to ${
           event.in_reply_to_status_id_str
         } from ${event.user.screen_name} for ${thread.path}`
       );
 
       // add to collection
       await event_handler.add_to_collection(event.id_str, thread).catch(err => {
-        console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+        console.error(`[*] twitter:stream-activity - ${err}`);
       });
     }
   },
@@ -101,7 +98,7 @@ module.exports = () => {
     follow: process.env.TWUID
   });
 
-  console.info(`[i] svcstream:twitter:stream-activity - streaming started`);
+  console.info(`[i] twitter:stream-activity - streaming started`);
 
   stream.on("tweet", event => {
     if (
@@ -115,14 +112,14 @@ module.exports = () => {
   });
 
   stream.on("error", err => {
-    console.error(`[*] svcstream:twitter:stream-activity - ${err}`);
+    console.error(`[*] twitter:stream-activity - ${err}`);
   });
 
   stream.on("disconnect", err => {
-    console.error(`[*] svcstream:twitter:stream-activity - dc: ${err}`);
+    console.error(`[*] twitter:stream-activity - dc: ${err}`);
   });
 
   stream.on("reconnect", () => {
-    console.info(`[i] svcstream:twitter:stream-activity - reconnecting`);
+    console.info(`[i] twitter:stream-activity - reconnecting`);
   });
 };

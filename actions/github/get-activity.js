@@ -1,5 +1,4 @@
 const { performance } = require("perf_hooks");
-const store = require("../../util/store-do");
 const gh = require("@octokit/rest")();
 gh.authenticate({
   type: "token",
@@ -14,7 +13,7 @@ let update = async () => {
 
   try {
     let activity_groups = [];
-    console.info(`[i] svcweb:github:get-commit_activity - update: begin`);
+    console.info(`[i] github:get-activity - update: begin`);
     const repos = await gh.repos.getAll({
       visibility: "public",
       sort: "pushed",
@@ -34,9 +33,7 @@ let update = async () => {
             per_page: 5
           })
           .catch(err => {
-            console.error(
-              `[*] svcweb:github:get-commit_activity - update: ${err}`
-            );
+            console.error(`[*] github:get-activity - update: ${err}`);
           });
 
         commits = Array.from(commits.data, commit => ({
@@ -100,42 +97,34 @@ let update = async () => {
 
     const rate_limit = await gh.misc.getRateLimit({});
     console.info(
-      `[i] svccron:github:get-commit_activity - end (${(
+      `[i] github:get-activity - update end (${(
         performance.now() - update_start
       ).toFixed(2)}ms)`
-    );
-
-    console.info(
-      `[i] svccron:github:get-commit_activity - github rate limit at ${
-        rate_limit.data.rate.remaining
-      }, resets at ${new Date(rate_limit.data.rate.reset * 1000).toISOString()}`
     );
 
     ghdata = { updated: new Date(), data: activity_groups };
     ghprocessing = false;
   } catch (err) {
-    console.error(`[*] svcweb:github:get-commit_activity - update: ${err}`);
+    console.error(`[*] github:get-activity - update: ${err}`);
   }
 };
 
 update(); // initial update, get on it quick before requests come in
-setInterval(() => update(), 1000 * 60 * 30); // 30 min update
+setInterval(() => update(), 1000 * 60 * 60); // hourly update to keep cached version fresh
 
 module.exports = async (req, res) => {
   let req_start = performance.now();
 
-  console.info(`[i] svcweb:github:get-commit_activity - begin`);
+  console.info(`[i] github:get-activity - begin`);
   let perf = performance.now() - req_start; // kinda redundant now??
 
-  res.setHeader("x-api-endpoint", "svcweb:github:get-commit_activity");
+  res.setHeader("x-api-endpoint", "github:get-activity");
   res.setHeader("x-api-perf", perf.toFixed(0));
   res.setHeader("last-modified", new Date(ghdata.updated).toUTCString());
   res.setHeader("cache-control", "public, max-age=1800"); // browser cache 30 mins
 
   res.type("json").send(ghdata);
-  console.info(
-    `[i] svcweb:github:get-commit_activity - end (${perf.toFixed(2)}ms)`
-  );
+  console.info(`[i] github:get-activity - end (${perf.toFixed(2)}ms)`);
 
   if (new Date() - ghdata.updated > 1000 * 60 * 5 && !ghprocessing)
     // update in the bg if not updated in the last 5 mins
