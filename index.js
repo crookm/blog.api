@@ -3,60 +3,27 @@
 require("dotenv").config();
 
 const express = require("express");
-const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.set("env", "production");
-app.use(require("body-parser").json());
-app.use(
-  cors({
-    origin: "*",
-    optionsSuccessStatus: 200
-  })
-);
 
-// ffs with body parser not handling exceptions well
-app.use(function(err, req, res, next) {
-  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    res.setHeader("x-api-perf","0"); // justify: never entered func
-    res.status(400).send({ code: 400, message: "bad request" });
-  } else next();
-});
+// setup versioned api routes
+const api_v1 = require("./routes/api-v1");
+const api_v2 = require("./routes/api-v2");
 
-/**
- * SVCWEB
- * web api events
- */
-app.get(
-  "/svcweb/github/commits/recent",
-  require("./svcweb/github/get-commit_activity")
-);
-console.info(`[i] svcweb:github:get-commit_activity - route added`);
+app.use("/", api_v1); // legacy un-versioned - will be removed v soon
+app.use("/v1", api_v1);
+app.use("/v2", api_v2);
 
-app.get(
-  "/svcweb/twitter/post/thread",
-  require("./svcweb/twitter/get-thread_tweet")
-);
-console.info(`[i] svcweb:twitter:get-thread_tweet - route added`);
-
-// NYI
-// app.post(
-//   "/svcweb/analytics/event/do/:cat",
-//   require("./svcweb/analytics/do-produce_event")
-// );
-// console.info(`[i] svcweb:analytics:do-produce_event - route added`);
-
-/**
- * SVCSTREAM
- * live socket events
- */
-require("./svcstream/twitter/stream-activity")();
+// setup streamed actions
+require("./actions/twitter/stream-activity")();
 
 const srv = app.listen(port, () =>
   console.info(`[i] listening on port ${port}`)
 );
 
+// handle shutdowns gracefully
 let goodbye = signal => {
   console.info(`[i] received ${signal}, shutting down...`);
   let readiness = 0; // num of services saying goodbye
