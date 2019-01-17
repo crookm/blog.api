@@ -16,6 +16,7 @@ let update = async () => {
     console.info(`[i] github:get-activity - update: begin`);
     const repos = await gh.repos.getAll({
       visibility: "public",
+      affiliation: "owner",
       sort: "pushed",
       per_page: 5
     });
