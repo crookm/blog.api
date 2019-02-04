@@ -11,7 +11,8 @@ module.exports = async (req, res) => {
 
   try {
     res.setHeader("x-api-endpoint", "react:post-react");
-    res.setHeader("cache-control", "public, max-age=14400"); // browser cache 4 hrs
+    res.setHeader("cache-control", "no-cache, no-store, must-revalidate"); // no cache
+    res.setHeader("expires", "0"); // no cache on proxies
 
     if (
       typeof req.query.id === "undefined" ||
