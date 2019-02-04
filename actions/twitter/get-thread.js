@@ -14,7 +14,7 @@ const twclient = new tw({
 
 module.exports = async (req, res) => {
   let req_start = performance.now();
-  console.info(`[i] tw:get-thread - begin`);
+  console.info(`[i] twitter:get-thread - begin`);
 
   try {
     res.setHeader("x-api-endpoint", "twitter:get-thread");

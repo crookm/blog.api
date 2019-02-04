@@ -59,6 +59,25 @@ module.exports = {
       }
     }),
 
+  aggregate: (db_name, coll_name, pipeline, opts) =>
+    new Promise(async (resolve, reject) => {
+      // might end up connecting to the db ourselves here to simplify
+      if (typeof dbs[db_name] === "undefined")
+        reject("[find] db not connected, use db_open first");
+      else {
+        // db.collection unfortunately isn't promisified :,(
+        let collection = await module.exports
+          .coll_get(db_name, coll_name)
+          .catch(reject);
+
+        try {
+          resolve(collection.aggregate(pipeline, opts));
+        } catch (err) {
+          reject(err);
+        }
+      }
+    }),
+
   insert: (db_name, coll_name, docs) =>
     new Promise(async (resolve, reject) => {
       // might end up connecting to the db ourselves here to simplify

@@ -26,8 +26,14 @@ router.use(function(err, req, res, next) {
 });
 
 // actions
+let rc_get_react = require("../actions/react/get-react");
+let rc_post_react = require("../actions/react/post-react");
 let tw_get_thread = require("../actions/twitter/get-thread");
 let gh_get_activity = require("../actions/github/get-activity");
+
+// reaction routes
+router.get("/rc/get/react", rc_get_react);
+router.get("/rc/post/react", rc_post_react);
 
 // twitter routes
 router.get("/tw/get/thread", tw_get_thread);
