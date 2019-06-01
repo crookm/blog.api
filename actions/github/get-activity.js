@@ -15,10 +15,10 @@ let update = async () => {
     let activity_groups = [];
     console.info(`[i] github:get-activity - update: begin`);
     const repos = await gh.repos.getAll({
-      visibility: "public",
+      visibility: "all",
       affiliation: "owner",
       sort: "pushed",
-      per_page: 5
+      per_page: 10
     });
 
     for (const item in repos.data) {
@@ -26,64 +26,71 @@ let update = async () => {
         const repo = repos.data[item];
 
         // use promises here to spawn all reqs at once
-        let commits = await gh.repos
-          .getCommits({
-            owner: repo.owner.login,
-            repo: repo.name,
-            author: process.env.GHNAME,
-            per_page: 5
-          })
-          .catch(err => {
-            console.error(`[*] github:get-activity - update: ${err}`);
-          });
+        if (!repo.private) {
+          let commits = await gh.repos
+            .getCommits({
+              owner: repo.owner.login,
+              repo: repo.name,
+              author: process.env.GHNAME,
+              per_page: 5
+            })
+            .catch(err => {
+              console.error(`[*] github:get-activity - update: ${err}`);
+            });
 
-        commits = Array.from(commits.data, commit => ({
-          sha: commit.sha,
-          commit: {
-            author: {
-              ...commit.commit.author,
-              avatar_url: commit.author.avatar_url
+          commits = Array.from(commits.data, commit => ({
+            sha: commit.sha,
+            commit: {
+              author: {
+                ...commit.commit.author,
+                avatar_url: commit.author.avatar_url
+              },
+              committer: {
+                ...commit.commit.committer,
+                avatar_url: commit.committer.avatar_url
+              },
+              tree: { sha: commit.commit.tree.sha },
+              comment_count: commit.commit.comment_count,
+              verification: commit.commit.verification,
+              message: commit.commit.message
             },
-            committer: {
-              ...commit.commit.committer,
-              avatar_url: commit.committer.avatar_url
-            },
-            tree: { sha: commit.commit.tree.sha },
-            comment_count: commit.commit.comment_count,
-            verification: commit.commit.verification,
-            message: commit.commit.message
-          },
-          html_url: commit.html_url,
-          parents: Array.from(commit.parents, parent => ({
-            sha: parent.sha,
-            html_url: parent.html_url
-          }))
-        }));
+            html_url: commit.html_url,
+            parents: Array.from(commit.parents, parent => ({
+              sha: parent.sha,
+              html_url: parent.html_url
+            }))
+          }));
+        }
 
         activity_groups.push({
           repo: {
-            id: repo.id,
-            name: repo.name,
-            full_name: repo.full_name,
+            id: repo.private ? "[private]" : repo.id,
+            name: repo.private ? "[private]" : repo.name,
+            full_name: repo.private
+              ? `${repo.owner.login}/[private]`
+              : repo.full_name,
             owner: {
               login: repo.owner.login,
               avatar_url: repo.owner.avatar_url
             },
-            html_url: repo.html_url,
-            description: repo.description,
-            fork: repo.fork,
+            private: repo.private,
+            html_url: repo.private ? "[private]" : repo.html_url,
+            description: repo.private
+              ? "A private repository"
+              : repo.description,
+            fork: repo.private ? "[private]" : repo.fork,
             created_at: repo.created_at,
             updated_at: repo.updated_at,
             pushed_at: repo.pushed_at,
-            git_url: repo.git_url,
-            ssh_url: repo.ssh_url,
-            clone_url: repo.clone_url,
-            homepage: repo.homepage,
+            git_url: repo.private ? "[private]" : repo.git_url,
+            ssh_url: repo.private ? "[private]" : repo.ssh_url,
+            clone_url: repo.private ? "[private]" : repo.clone_url,
+            homepage: repo.private ? "[private]" : repo.homepage,
             size: repo.size,
-            stargazers_count: repo.stargazers_count,
-            watchers_count: repo.watchers_count,
-            forks_count: repo.forks_count,
-            open_issues_count: repo.open_issues,
+            stargazers_count: repo.private ? 0 : repo.stargazers_count,
+            watchers_count: repo.private ? 0 : repo.watchers_count,
+            forks_count: repo.private ? 0 : repo.forks_count,
+            open_issues_count: repo.private ? 0 : repo.open_issues,
             language: repo.language
           },
           commits: commits
