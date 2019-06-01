@@ -24,10 +24,11 @@ let update = async () => {
     for (const item in repos.data) {
       if (repos.data.hasOwnProperty(item)) {
         const repo = repos.data[item];
+        let commits = [];
 
         // use promises here to spawn all reqs at once
         if (!repo.private) {
-          let commits = await gh.repos
+          commits = await gh.repos
             .getCommits({
               owner: repo.owner.login,
               repo: repo.name,
